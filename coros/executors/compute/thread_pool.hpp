@@ -23,8 +23,11 @@ class ThreadPool : public IExecutor {
 
   static ThreadPool* Current();
 
+  ~ThreadPool();
+
  private:
   void WorkerRoutine();
+
  private:
   std::vector<std::thread> workers_;
   MPMCBlockingQueue<tasks::TaskBase> tasks_;

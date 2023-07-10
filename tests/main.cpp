@@ -6,10 +6,7 @@
 #include <coros/tasks/sched/fire.hpp>
 
 TEST(Main, gorroutine) {
-
   using namespace coros;
-
-  executors::compute::ThreadPool pool{4};
 
   auto done = false;
 
@@ -26,10 +23,6 @@ TEST(Main, gorroutine) {
   tasks::FireAndForget(std::move(task));
 
   ASSERT_TRUE(done);
-
-  pool.WaitIdle();
-
-  pool.Stop();
 }
 
 TEST(Main, teleport) {

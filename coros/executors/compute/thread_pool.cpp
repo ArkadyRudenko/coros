@@ -46,4 +46,8 @@ ThreadPool* ThreadPool::Current() {
   return pool;
 }
 
+ThreadPool::~ThreadPool() {
+  Stop();
+}
+
 }  // namespace coros::executors::compute

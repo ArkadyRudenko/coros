@@ -7,7 +7,7 @@ namespace coros::tasks {
 // Blocks current thread
 template <typename T>
 T Run(Task<T>&& /*task*/) {
-  //  std::abort();  // Not implemented
+  // blocking ~ Await()
 }
 
 }  // namespace coros::tasks
