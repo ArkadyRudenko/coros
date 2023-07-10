@@ -1,5 +1,7 @@
 #include <coros/executors/compute/thread_pool.hpp>
 
+#include <iostream>
+
 namespace coros::executors::compute {
 
 static thread_local ThreadPool* pool{nullptr};
@@ -13,7 +15,9 @@ ThreadPool::ThreadPool(size_t threads) {
 void ThreadPool::Execute(tasks::TaskBase* task) {
   tasks_count_.Add(1);
   if (!tasks_.Put(task)) {
-    // TODO
+    task->Discard();
+    std::cerr << "Execute is not ordered with Stop";
+    std::abort();
   }
 }
 
@@ -36,6 +40,10 @@ void ThreadPool::Stop() {
     worker.join();
   }
   workers_.clear();
+}
+
+ThreadPool* ThreadPool::Current() {
+  return pool;
 }
 
 }  // namespace coros::executors::compute

@@ -11,8 +11,10 @@ add_subdirectory(coros)
 
 if(COROS_ADDRESS_SANITIZE)
     message("Enable ADDRESS_SANITIZE")
-    add_compile_options(-fsanitize=address)
-    add_link_options(-fsanitize=address)
+#    add_compile_options(-fsanitize=address)
+#    add_link_options(-fsanitize=address)
+    add_compile_options(-fsanitize=thread)
+    add_link_options(-fsanitize=thread)
 endif()
 
 add_executable(coros_main main.cpp)

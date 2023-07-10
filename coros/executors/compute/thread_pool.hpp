@@ -6,8 +6,8 @@
 
 #include <coros/executors/compute/queues/blocking_queue.hpp>
 #include <coros/executors/executor.hpp>
+#include <coros/support/task_count.hpp>
 #include <coros/tasks/task.hpp>
-#include <coros/support/TaskCount.hpp>
 
 namespace coros::executors::compute {
 
@@ -20,6 +20,8 @@ class ThreadPool : public IExecutor {
   void WaitIdle();
 
   void Stop();
+
+  static ThreadPool* Current();
 
  private:
   void WorkerRoutine();
