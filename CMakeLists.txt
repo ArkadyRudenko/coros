@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 project(coros)
 
+set(CMAKE_CXX_STANDARD 20)
+
 option(COROS_TESTS "Build coros tests" ON)
 option(COROS_EXAMPLES "Build coros examples" ON)
 option(COROS_ADDRESS_SANITIZE "COROS_ADDRESS_SANITIZE on" ON)

@@ -1,5 +1,7 @@
 set(LIB_TARGET coros)
 
+add_compile_options("-fcoroutines-ts")
+
 get_filename_component(LIB_PATH "." ABSOLUTE)
 get_filename_component(LIB_INCLUDE_PATH ".." ABSOLUTE)
 
