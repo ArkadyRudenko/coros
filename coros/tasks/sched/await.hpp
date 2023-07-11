@@ -6,8 +6,10 @@ namespace coros::tasks {
 
 // Blocks current thread
 template <typename T>
-T Run(Task<T>&& /*task*/) {
-  // blocking
+T Await(Task<T>&& task) {
+  auto handle = task.ReleaseCoroutine();
+  handle.resume();
+  return std::move(handle.promise().result.value());
 }
 
 }  // namespace coros::tasks
