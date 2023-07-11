@@ -8,8 +8,10 @@ namespace coros::tasks {
 template <typename T>
 T Await(Task<T>&& task) {
   auto handle = task.ReleaseCoroutine();
-  handle.resume();
-  return std::move(handle.promise().result.value());
+  while (!handle.done()) {
+    handle.resume();
+  }
+  return std::move(handle.promise().GetResult().value());
 }
 
 }  // namespace coros::tasks

@@ -10,12 +10,12 @@ namespace coros::tasks {
 class WaitGroup {
  public:
   void Add(size_t count) {
-    std::lock_guard lock(spinlock_);
+    std::lock_guard lock(spinlock_); // TODO
     count_.fetch_add(count);
   }
 
   void Done() {
-    std::unique_lock lock(spinlock_);
+    std::unique_lock lock(spinlock_); // TODO
     if (count_.fetch_sub(1) == 1) {
       one_shot_event_.Fire(lock);
     }

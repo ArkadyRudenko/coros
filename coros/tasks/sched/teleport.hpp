@@ -8,9 +8,9 @@
 namespace coros::tasks {
 namespace detail {
 
-class TaskAwaiter : public tasks::TaskBase {
+class TaskTeleportAwaiter : public tasks::TaskBase {
  public:
-  TaskAwaiter(executors::IExecutor& executor) : executor_(executor) {}
+  TaskTeleportAwaiter(executors::IExecutor& executor) : executor_(executor) {}
 
   bool await_ready() { return false; }
 
@@ -34,6 +34,7 @@ class TaskAwaiter : public tasks::TaskBase {
 
 // Reschedule current coroutine to executor `target`
 inline auto TeleportTo(executors::IExecutor& target) {
-  return detail::TaskAwaiter{target};
+  return detail::TaskTeleportAwaiter{target};
 }
+
 }  // namespace coros::tasks

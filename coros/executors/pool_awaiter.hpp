@@ -5,7 +5,7 @@
 namespace coros::executors {
 
 inline auto operator co_await(IExecutor& executor) {
-  return coros::tasks::detail::TaskAwaiter{executor};
+  return coros::tasks::detail::TaskTeleportAwaiter{executor};
 }
 
 }  // namespace coros::executors

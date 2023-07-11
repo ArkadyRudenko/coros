@@ -6,6 +6,8 @@
 
 namespace coros::support {
 
+// use https://en.cppreference.com/w/cpp/utility/expected since C++23
+
 template <typename T>
 class Result {
  public:

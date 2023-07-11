@@ -37,23 +37,37 @@ struct Task {
       std::terminate();  // Not implemented
     }
 
-    void return_value(std::optional<T>&& res) { result = std::move(res); }
+    void return_value(T res) {
+      *res_ = std::move(res);
+      if (caller_.address() != nullptr) {
+        caller_.resume();
+      }
+    }
 
-    std::optional<T> result;  // TODO
+    void SetCaller(std::coroutine_handle<> caller) { caller_ = caller; }
+
+    //    std::optional<T> GetResult() { return std::move(result_); }
+
+    void SetResultPlace(T* res) { res_ = res; }
+
+   private:
+    T* res_;  // TODO: Result<T>
+    std::coroutine_handle<> caller_;
   };
 
   template <>
   struct Promise<support::Unit> {
     // NOLINTNEXTLINE
     auto get_return_object() {
-      return Task{std::coroutine_handle<Promise>::from_promise(*this)};
+      return Task{
+          std::coroutine_handle<Promise<support::Unit>>::from_promise(*this)};
     }
 
     // NOLINTNEXTLINE
-    auto initial_suspend() noexcept { return std::suspend_always{}; }
+    std::suspend_always initial_suspend() noexcept { return {}; }
 
     // NOLINTNEXTLINE
-    auto final_suspend() noexcept { return std::suspend_never{}; }
+    std::suspend_never final_suspend() noexcept { return {}; }
 
     // NOLINTNEXTLINE
     void set_exception(std::exception_ptr) {
@@ -67,8 +81,15 @@ struct Task {
 
     // NOLINTNEXTLINE
     void return_void() {
-      // Not implemented
+      if (caller_.address() != nullptr) {
+        caller_.resume();
+      }
     }
+
+    void SetCaller(std::coroutine_handle<> caller) { caller_ = caller; }
+
+   private:
+    std::coroutine_handle<> caller_;
   };
 
   using CoroutineHandle = std::coroutine_handle<Promise<T>>;
@@ -82,8 +103,8 @@ struct Task {
   Task& operator=(const Task&) = delete;
 
   ~Task() {
-    if (callee_ && !callee_.done()) {
-      std::terminate();
+    if (callee_ && callee_.done()) {
+      callee_.destroy();
     }
   }
 

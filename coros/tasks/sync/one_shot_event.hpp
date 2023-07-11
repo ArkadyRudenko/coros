@@ -25,14 +25,14 @@ class OneShotEvent {
 
     // NOLINTNEXTLINE
     bool await_ready() {
-      std::lock_guard lock(one_shot_event_.spinlock_);
+      std::lock_guard lock(one_shot_event_.spinlock_); // TODO
       return one_shot_event_.wait_count_.load() == 0;
     }
 
     // NOLINTNEXTLINE
     bool await_suspend(CoroutineHandle awaiting_coroutine) {
       coro_handle_ = awaiting_coroutine;
-      std::lock_guard lock(one_shot_event_.spinlock_);
+      std::lock_guard lock(one_shot_event_.spinlock_); // TODO
       if (one_shot_event_.wait_count_.load() == 0) {
         return false;
       }
