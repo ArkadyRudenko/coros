@@ -1,13 +1,17 @@
 #pragma once
 
+#include <atomic>
 #include <coroutine>
 #include <exception>
 #include <optional>
 #include <utility>
 
+#include <coros/executors/executor.hpp>
 #include <coros/support/unit.hpp>
 
 namespace coros::tasks {
+
+std::atomic<int> a{0};
 
 template <typename T = support::Unit>
 struct Task {
@@ -39,8 +43,8 @@ struct Task {
 
     void return_value(T res) {
       *res_ = std::move(res);
-      if (caller_.address() != nullptr) {
-        caller_.resume();
+      if (caller_) {
+        std::exchange(caller_, CoroutineHandle()).resume();
       }
     }
 
@@ -81,8 +85,8 @@ struct Task {
 
     // NOLINTNEXTLINE
     void return_void() {
-      if (caller_.address() != nullptr) {
-        caller_.resume();
+      if (caller_) {
+        std::exchange(caller_, CoroutineHandle()).resume();
       }
     }
 
@@ -94,7 +98,8 @@ struct Task {
 
   using CoroutineHandle = std::coroutine_handle<Promise<T>>;
 
-  explicit Task(CoroutineHandle callee) : callee_(callee) {}
+  explicit Task(CoroutineHandle callee)
+      : callee_(callee), name_("name" + std::to_string(a.fetch_add(1))) {}
 
   Task(Task&&) = default;
 
@@ -102,18 +107,24 @@ struct Task {
   Task(const Task&) = delete;
   Task& operator=(const Task&) = delete;
 
-  ~Task() {
-    if (callee_ && callee_.done()) {
-      callee_.destroy();
-    }
-  }
+// TODO: error:
+//  ~Task() {
+//    if (callee_ != nullptr) {
+//      callee_.destroy();
+//    }
+//  }
 
   CoroutineHandle ReleaseCoroutine() {
     return std::exchange(callee_, CoroutineHandle());
   }
 
+  Task<T> Via(executors::IExecutor& executor) {
+
+  }
+
  private:
   CoroutineHandle callee_;
+  std::string name_;
 };
 
 }  // namespace coros::tasks

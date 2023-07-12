@@ -5,10 +5,10 @@
 #include <coros/executors/compute/thread_pool.hpp>
 #include <coros/executors/pool_awaiter.hpp>
 #include <coros/tasks/core/task.hpp>
+#include <coros/tasks/core/task_awaiter.hpp>
 #include <coros/tasks/sched/await.hpp>
 #include <coros/tasks/sched/fire.hpp>
 #include <coros/tasks/sched/teleport.hpp>
-#include <coros/tasks/core/task_awaiter.hpp>
 
 TEST(Main, gorroutine) {
   using namespace coros;
@@ -63,11 +63,11 @@ TEST(Main, teleport) {
   pool.Stop();
 }
 
-coros::tasks::Task<> Compute(coros::executors::compute::ThreadPool& pool) {
+coros::tasks::Task<int> Compute(coros::executors::compute::ThreadPool& pool) {
   co_await pool;
   std::cout << "Step 1" << std::endl;
   std::cout << "th-id Compute: " << std::this_thread::get_id() << std::endl;
-  co_return;
+  co_return 42;
 }
 
 TEST(Main, co_await_in_pool) {
@@ -76,12 +76,13 @@ TEST(Main, co_await_in_pool) {
 
   auto gorroutine = [&]() -> tasks::Task<> {
     co_await pool;
-    std::cout << "th-id Gorroutine: " << std::this_thread::get_id() << std::endl;
+    std::cout << "th-id Gorroutine: " << std::this_thread::get_id()
+              << std::endl;
+    int v = co_await Compute(pool) + co_await Compute(pool);
     co_await Compute(pool);
     co_await Compute(pool);
     co_await Compute(pool);
-    co_await Compute(pool);
-    co_await Compute(pool);
+    std::cout << "value = " << v << std::endl;
 
     co_return;
   };

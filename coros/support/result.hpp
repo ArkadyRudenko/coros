@@ -2,27 +2,29 @@
 
 #include <memory>
 
-#include <coros/support/error.hpp>
-
 namespace coros::support {
 
 // use https://en.cppreference.com/w/cpp/utility/expected since C++23
 
-template <typename T>
+// TODO all
+template <typename T, typename Err>
 class Result {
  public:
-  static Result<T> Ok(T&& value) { return Result<T>{std::move(value)}; }
-
-  template <typename... Args>
-  static Result<T> Err(Args&&... args) {
-    return Result<T>{std::make_shared<>(std::forward<Args>(args)...)};
+  static Result<T, Err> Ok(T&& value) {
+    return Result<T, Err>{std::move(value)};
   }
 
+  static Result<T, Err> Error(Err&& error) {
+    return Result<T, Err>{std::move(error)};
+  }
+
+  bool IsErr() {}
+
  private:
-  union value {
-    std::shared_ptr<Error> error_;
-    T value;
-  };
+
+ private:
+  Err error_;
+  T value;
 };
 
 }  // namespace coros::support

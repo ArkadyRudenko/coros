@@ -17,8 +17,6 @@ if(COROS_ADDRESS_SANITIZE)
 #    add_link_options(-fsanitize=thread)
 endif()
 
-add_executable(coros_main main.cpp)
-
 if(COROS_TESTS)
     message("COROS_TESTS ARE ENABLED")
     add_subdirectory(tests)

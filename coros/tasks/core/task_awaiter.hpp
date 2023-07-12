@@ -48,7 +48,6 @@ class TaskResultAwaiter<support::Unit> {
   void await_resume() {}
 
  private:
-  std::coroutine_handle<> handle_;
   tasks::Task<support::Unit> task_;
 };
 
