@@ -11,44 +11,33 @@ namespace coros::tasks {
 namespace detail {
 
 template <typename T>
-class TaskResultAwaiter {
+class TaskResultAwaiter : public tasks::TaskBase {
  public:
   explicit TaskResultAwaiter(tasks::Task<T>&& task) : task_(std::move(task)) {}
 
   bool await_ready() { return false; }
 
   void await_suspend(std::coroutine_handle<> caller) {
-    auto callee = task_.ReleaseCoroutine();
-    callee.promise().SetCaller(caller);
-    callee.promise().SetResultPlace(&result_);
-    callee.resume();  // TODO: push task in pool or task is responsible itself
+    callee_ = task_.ReleaseCoroutine();
+    callee_.promise().SetCaller(caller);
+    task_.GetExecutor().Execute(this);
   }
 
-  T await_resume() { return result_; }
+  T await_resume() {
+    if constexpr (std::is_same_v<T, support::Unit>) {
+      return support::Unit{};
+    }
+    return std::move(callee_.promise().GetResult().ExpectValue());
+  }
+
+  void Run() noexcept override { callee_.resume(); }
+
+  void Discard() noexcept override { callee_.destroy(); }
 
  private:
-  T result_;
+  using CalleePromise = typename tasks::Task<T>::Promise;
+  std::coroutine_handle<CalleePromise> callee_;
   tasks::Task<T> task_;
-};
-
-template <>
-class TaskResultAwaiter<support::Unit> {
- public:
-  explicit TaskResultAwaiter(tasks::Task<support::Unit>&& task)
-      : task_(std::move(task)) {}
-
-  bool await_ready() { return false; }
-
-  void await_suspend(std::coroutine_handle<> caller) {
-    auto callee = task_.ReleaseCoroutine();
-    callee.promise().SetCaller(caller);
-    callee.resume();
-  }
-
-  void await_resume() {}
-
- private:
-  tasks::Task<support::Unit> task_;
 };
 
 }  // namespace detail

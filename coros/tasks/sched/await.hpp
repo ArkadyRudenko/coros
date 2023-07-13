@@ -4,14 +4,14 @@
 
 namespace coros::tasks {
 
+// TODO
 // Blocks current thread
-template <typename T>
-T Await(Task<T>&& task) {
+//template <typename T>
+//T Await(Task<T>&& task) {
 //  auto handle = task.ReleaseCoroutine();
-//  while (!handle.done()) {
-//    handle.resume();
-//  }
-//  return std::move(handle.promise().GetResult().value());
-}
+//  handle.resume();
+//  handle.promise();
+//  return T{};
+//}
 
 }  // namespace coros::tasks

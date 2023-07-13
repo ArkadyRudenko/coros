@@ -1,7 +1,4 @@
-#include <coros/coros_main.hpp>
-#include <coros/executors/compute/thread_pool.hpp>
-#include <coros/tasks/core/task.hpp>
-#include <coros/tasks/sched/fire.hpp>
+#include <coros/coros.hpp>
 
 #include <iostream>
 

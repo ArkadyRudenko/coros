@@ -22,6 +22,7 @@ class ThreadPool : public IExecutor {
   void Stop();
 
   static ThreadPool* Current();
+  static ThreadPool& ToCurrent();
 
   ~ThreadPool();
 

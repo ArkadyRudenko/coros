@@ -2,29 +2,46 @@
 
 #include <memory>
 
+#include <coros/support/error.hpp>
+
 namespace coros::support {
 
 // use https://en.cppreference.com/w/cpp/utility/expected since C++23
 
-// TODO all
-template <typename T, typename Err>
+template <typename T>
 class Result {
  public:
-  static Result<T, Err> Ok(T&& value) {
-    return Result<T, Err>{std::move(value)};
+  static Result<T> Ok(T&& value) { return Result<T>{std::move(value)}; }
+
+  static Result<T> Err(Error&& error) { return Result<T>{std::move(error)}; }
+
+  [[nodiscard]] bool IsErr() const {
+    return std::holds_alternative<Error>(value_);
   }
 
-  static Result<T, Err> Error(Err&& error) {
-    return Result<T, Err>{std::move(error)};
+  [[nodiscard]] bool IsOk() const { return std::holds_alternative<T>(value_); }
+
+  T GetValue() { return std::move(std::get<T>(value_)); }
+
+  Error GetErr() { return std::move(std::get<Error>(value_)); }
+
+  T ExpectValue() {
+    if (IsErr()) {
+      GetErr().ThrowIfError();
+      throw std::runtime_error("result is empty");
+    } else if (IsOk()) {
+      return std::move(GetValue());
+    }
+    throw std::runtime_error("result is empty");
   }
 
-  bool IsErr() {}
+ private:
+  explicit Result(T&& value) : value_(std::move(value)) {}
+
+  explicit Result(Error&& error) : value_(std::move(error)) {}
 
  private:
-
- private:
-  Err error_;
-  T value;
+  std::variant<T, Error> value_;
 };
 
 }  // namespace coros::support

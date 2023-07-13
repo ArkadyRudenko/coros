@@ -18,7 +18,7 @@ TEST(Main, gorroutine) {
   auto gorroutine = [&]() -> tasks::Task<> {
     std::cout << "Hi" << std::endl;
     done = true;
-    co_return;
+    co_return {};
   };
 
   auto task = gorroutine();
@@ -47,7 +47,7 @@ TEST(Main, teleport) {
     std::cout << "pool is" << executors::compute::ThreadPool::Current()
               << std::endl;
     done = true;
-    co_return;
+    co_return {};
   };
 
   auto task = gorroutine();
@@ -84,11 +84,38 @@ TEST(Main, co_await_in_pool) {
     co_await Compute(pool);
     std::cout << "value = " << v << std::endl;
 
-    co_return;
+    co_return {};
   };
 
   auto task = gorroutine();
   tasks::FireAndForget(std::move(task));
+  pool.WaitIdle();
+  pool.Stop();
+}
+
+coros::tasks::Task<int> Compute() {
+  std::cout << "th-id Compute: " << std::this_thread::get_id() << std::endl;
+  co_return 42;
+}
+
+TEST(Main, Via) {
+  using namespace coros;
+  executors::compute::ThreadPool pool{4};
+
+  auto gorroutine = [&]() -> tasks::Task<> {
+    std::cout << "th-id before teleport: " << std::this_thread::get_id()
+              << std::endl;
+    co_await pool;
+    std::cout << "th-id Gorroutine: " << std::this_thread::get_id()
+              << std::endl;
+    int v = co_await Compute().Via(pool);
+    int v2 = co_await Compute();
+    std::cout << "value = " << v + v2 << std::endl;
+    co_return {};
+  };
+
+  coros::tasks::Await(gorroutine());
+//  tasks::FireAndForget(gorroutine());
   pool.WaitIdle();
   pool.Stop();
 }
