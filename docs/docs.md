@@ -53,6 +53,7 @@ int main() {
 ```
 
 Compute(pool) will run later in another (maybe in the same) thread of ThreadPool, so it is async func
+
 gorroutine() is a lazy task. It will be pushed to executor in place where you call tasks::FireAndForget(task) or co_await gorroutine()
 
 You can not use co_await in main() because main is not async func (is 'blue' function). For this goal, you should use IExecutor
