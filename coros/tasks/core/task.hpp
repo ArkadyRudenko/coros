@@ -79,14 +79,14 @@ struct Task {
     return std::exchange(callee_, CoroutineHandle());
   }
 
-  Task<T>&& Via(executors::IExecutor& executor) && {
-    return Task<T>{ReleaseCoroutine(), executor};
+  Task<T> Via(executors::IExecutor& executor) && {
+    return std::move(Task<T>{ReleaseCoroutine(), executor});
   }
 
   executors::IExecutor& GetExecutor() { return *executor_; }
 
   template <std::invocable Fn>
-  Task<T>&& Then(Fn&& /*func*/) && { // TODO
+  Task<T> Then(Fn&& /*func*/) && { // TODO
     return std::move(*this);
   }
 

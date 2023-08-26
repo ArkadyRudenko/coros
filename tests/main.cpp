@@ -11,6 +11,7 @@
 #include <coros/tasks/sched/fire.hpp>
 #include <coros/tasks/sched/teleport.hpp>
 #include <coros/tasks/sched/timer.hpp>
+#include <coros/tasks/sync/mutex.hpp>
 
 TEST(Main, Gorroutine) {
   using namespace coros;
@@ -146,4 +147,45 @@ TEST(Main, Timer) {
   pool.WaitIdle();
 
   pool.Stop();
+}
+
+TEST(Main, Mutex) {
+  using namespace coros;
+  using namespace std::chrono_literals;
+  using namespace tasks;
+
+  executors::compute::ThreadPool pool{4};
+
+  size_t counter{0};
+
+  static const size_t tasks_count = 1000;
+  static const size_t iter_count = 1000;
+
+  auto main = [&]() -> Task<> {
+    co_await pool;
+
+    Mutex mutex;
+
+    for (size_t i = 0; i < tasks_count; ++i) {
+      co_await [&]() -> Task<> {
+
+        for (size_t j = 0; j < iter_count; ++j) {
+          co_await mutex.ScopedLock();
+          ++counter;
+        }
+        co_return{};
+      }
+      ().Via(pool);
+    }
+
+    co_return{};
+  };
+
+  tasks::FireAndForget(main());
+
+  pool.WaitIdle();
+
+  pool.Stop();
+
+  ASSERT_EQ(counter, tasks_count * iter_count);
 }
