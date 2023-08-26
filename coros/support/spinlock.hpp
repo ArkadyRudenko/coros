@@ -2,7 +2,7 @@
 
 #include <atomic>
 
-namespace exe::support {
+namespace coros::support {
 
 // Test-and-TAS spinlock
 

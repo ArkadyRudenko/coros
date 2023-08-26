@@ -68,6 +68,10 @@ class MPSCStack {
     return ptr == nullptr;
   }
 
+  [[nodiscard]] bool IsEmpty() const {
+    return top_.load() == nullptr; // TODO
+  }
+
  private:
   std::atomic<Node*> top_{nullptr};
   Node nothing_;

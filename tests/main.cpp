@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <thread>
 
 #include <coros/executors/compute/thread_pool.hpp>
 #include <coros/executors/pool_awaiter.hpp>
@@ -9,8 +10,9 @@
 #include <coros/tasks/sched/await.hpp>
 #include <coros/tasks/sched/fire.hpp>
 #include <coros/tasks/sched/teleport.hpp>
+#include <coros/tasks/sched/timer.hpp>
 
-TEST(Main, gorroutine) {
+TEST(Main, Gorroutine) {
   using namespace coros;
 
   auto done = false;
@@ -18,7 +20,7 @@ TEST(Main, gorroutine) {
   auto gorroutine = [&]() -> tasks::Task<> {
     std::cout << "Hi" << std::endl;
     done = true;
-    co_return {};
+    co_return{};
   };
 
   auto task = gorroutine();
@@ -30,7 +32,7 @@ TEST(Main, gorroutine) {
   ASSERT_TRUE(done);
 }
 
-TEST(Main, teleport) {
+TEST(Main, Teleport) {
 
   using namespace coros;
 
@@ -47,7 +49,7 @@ TEST(Main, teleport) {
     std::cout << "pool is" << executors::compute::ThreadPool::Current()
               << std::endl;
     done = true;
-    co_return {};
+    co_return{};
   };
 
   auto task = gorroutine();
@@ -70,7 +72,7 @@ coros::tasks::Task<int> Compute(coros::executors::compute::ThreadPool& pool) {
   co_return 42;
 }
 
-TEST(Main, co_await_in_pool) {
+TEST(Main, CoAwaitInPool) {
   using namespace coros;
   executors::compute::ThreadPool pool{4};
 
@@ -84,7 +86,7 @@ TEST(Main, co_await_in_pool) {
     co_await Compute(pool);
     std::cout << "value = " << v << std::endl;
 
-    co_return {};
+    co_return{};
   };
 
   auto task = gorroutine();
@@ -111,11 +113,37 @@ TEST(Main, Via) {
     int v = co_await Compute().Via(pool);
     int v2 = co_await Compute();
     std::cout << "value = " << v + v2 << std::endl;
-    co_return {};
+    co_return{};
   };
 
-  coros::tasks::Await(gorroutine());
-//  tasks::FireAndForget(gorroutine());
+  //  coros::tasks::Await(gorroutine());
+  tasks::FireAndForget(gorroutine());
   pool.WaitIdle();
+  pool.Stop();
+}
+
+TEST(Main, Timer) {
+  using namespace coros;
+  using namespace std::chrono_literals;
+
+  executors::compute::ThreadPool pool{4};
+
+  auto timer = [&]() -> tasks::Task<> {
+    co_await pool;
+
+    std::cout << "Start sleep for 3 seconds..." << std::endl;
+
+    co_await 3s;
+
+    std::cout << "3s later..." << std::endl;
+
+    co_return{};
+  };
+
+  tasks::FireAndForget(timer());
+  std::this_thread::sleep_for(7s);
+
+  pool.WaitIdle();
+
   pool.Stop();
 }

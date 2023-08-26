@@ -17,70 +17,61 @@ class OneShotEvent {
     using CoroutineHandle = std::coroutine_handle<>;
 
     OneShotEvent& one_shot_event_;
+    CoroutineHandle coro_handle_;
 
-    explicit WaitGroupAwaiter(OneShotEvent& wait_group)
-        : one_shot_event_(wait_group) {}
+    explicit WaitGroupAwaiter(OneShotEvent& ev) : one_shot_event_(ev) {}
 
     // Awaiter protocol
 
     // NOLINTNEXTLINE
-    bool await_ready() {
-      std::lock_guard lock(one_shot_event_.spinlock_); // TODO
-      return one_shot_event_.wait_count_.load() == 0;
-    }
+    bool await_ready() { return one_shot_event_.awaiters_.IsEmpty(); }
 
     // NOLINTNEXTLINE
     bool await_suspend(CoroutineHandle awaiting_coroutine) {
-      coro_handle_ = awaiting_coroutine;
-      std::lock_guard lock(one_shot_event_.spinlock_); // TODO
-      if (one_shot_event_.wait_count_.load() == 0) {
+      if (await_ready()) {
         return false;
       }
-      one_shot_event_.Push(this);
-      return true;
+      coro_handle_ = awaiting_coroutine;
+      return one_shot_event_.awaiters_.PushIfNotEmpty(this);
     }
 
     // NOLINTNEXTLINE
     void await_resume() {}
-
-    CoroutineHandle coro_handle_;
   };
 
-  explicit OneShotEvent(std::atomic<size_t>& wait_count,
-                        exe::support::SpinLock& spinlock)
-      : wait_count_(wait_count), spinlock_(spinlock) {}
+  OneShotEvent() = default;
 
   // Asynchronous
   auto Wait() { return WaitGroupAwaiter{*this}; }
 
   // One-shot
   // We can not lock spinlock in ~WaitGroup -> deadlock, because Fire(){ lock() -> handle_.resume() } -> ~WaitGroup()
-  void Fire(std::unique_lock<exe::support::SpinLock>& lock) {
+  void Fire() {
+    WaitGroupAwaiter* h;
+    WaitGroupAwaiter* prev = nullptr;
     while (true) {
-      auto awaiter = awaiters_.TryPop();
-      if (awaiter == nullptr) {
-        lock.unlock();
-        return;
+      h = awaiters_.TryPop();
+      if (h == nullptr && awaiters_.TryPopNothing()) {
+        break;
       }
-      bool exit = awaiter->next_ == nullptr;
-      if (exit) {
-        lock.unlock();
+      if (h != nullptr) {
+        if (prev == nullptr) {
+          prev = h;
+          continue;
+        }
+        h->coro_handle_.resume();
       }
-      awaiter->coro_handle_.resume();
-      if (exit) {
-        return;
-      }
+    }
+    if (prev != nullptr) {
+      prev->coro_handle_.resume();
     }
   }
 
- private:
-  void Push(WaitGroupAwaiter* wait_group_awaiter) {
-    awaiters_.PushIsFirst(wait_group_awaiter);
+  void Lock() {
+    awaiters_.TryPushNothing();
   }
 
  private:
-  std::atomic<size_t>& wait_count_;
-  exe::support::SpinLock& spinlock_;
   support::MPSCStack<WaitGroupAwaiter> awaiters_;
 };
 

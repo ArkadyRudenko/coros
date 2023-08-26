@@ -9,25 +9,26 @@ namespace coros::tasks {
 
 class WaitGroup {
  public:
+  WaitGroup() { ev_.Lock(); }
+
   void Add(size_t count) {
-    std::lock_guard lock(spinlock_); // TODO
-    count_.fetch_add(count);
+    if (count_.fetch_add(count) == 0) {
+      ev_.Lock();
+    }
   }
 
-  void Done() {
-    std::unique_lock lock(spinlock_); // TODO
-    if (count_.fetch_sub(1) == 1) {
-      one_shot_event_.Fire(lock);
+  void Done(size_t count = 1) {
+    if (count_.fetch_sub(count) == count) {
+      ev_.Fire();
     }
   }
 
   // Asynchronous
-  auto Wait() { return one_shot_event_.Wait(); }
+  auto Wait() { return ev_.Wait(); }
 
  private:
   std::atomic<size_t> count_{0};
-  exe::support::SpinLock spinlock_;
-  OneShotEvent one_shot_event_{count_, spinlock_};
+  OneShotEvent ev_;
 };
 
 }  // namespace coros::tasks
