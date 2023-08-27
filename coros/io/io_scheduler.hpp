@@ -59,8 +59,8 @@ class IOScheduler {
   void Stop() {
     stop_request_.store(true);
     struct io_uring_sqe* sqe = io_uring_get_sqe(&ring);
-    io_uring_prep_write(sqe, 1, "_",
-                        1, 0);
+    io_uring_prep_write(sqe, 1, "",
+                        0, 0);
     io_uring_submit(&ring);
     worker_thread_.join();
   }

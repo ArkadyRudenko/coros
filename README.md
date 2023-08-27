@@ -1,16 +1,15 @@
-# coros
+# Coros 🚀
 
 ---
-
-coros is a light-weight concurrency framework with coroutines from C++20 with:
+Coros is a light-weight concurrency framework with coroutines from C++20:
   - co_await
-  - co_yield
   - co_return
 
----
+[Docs](docs/docs.md)
 
-[docs](docs/docs.md)
+- Features
+    - async io
+    - timers
 
----
 
 Inspired by the [best concurrency-course](https://www.youtube.com/playlist?list=PL4_hYwCyhAva37lNnoMuBcKRELso5nvBm)

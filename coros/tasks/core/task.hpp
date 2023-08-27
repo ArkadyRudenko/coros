@@ -60,7 +60,11 @@ struct Task {
 
   using CoroutineHandle = std::coroutine_handle<Promise>;
 
-  explicit Task(CoroutineHandle callee) : callee_(callee) {}
+  explicit Task(CoroutineHandle callee) : callee_(callee) {
+    if (executors::compute::ThreadPool::Current() != nullptr) {
+      executor_ = executors::compute::ThreadPool::Current();
+    }
+  }
 
   Task(Task&&) = default;
 
@@ -86,7 +90,7 @@ struct Task {
   executors::IExecutor& GetExecutor() { return *executor_; }
 
   template <std::invocable Fn>
-  Task<T> Then(Fn&& /*func*/) && { // TODO
+  Task<T> Then(Fn&& /*func*/) && {  // TODO
     return std::move(*this);
   }
 

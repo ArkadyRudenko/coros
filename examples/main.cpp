@@ -2,10 +2,21 @@
 
 #include <iostream>
 
-auto coroutine() -> coros::tasks::Task<int> {
-  co_return 42;
-}
+int main() {
+  using namespace std::chrono_literals;
 
-coros_main({
-  std::cout << co_await coroutine();
-})
+  coros::RunScheduler([]() -> coros::tasks::Task<> {
+    std::cout << "Hello from pool!" << std::endl;
+
+    coros::io::File file = coros::io::File::New("hello.txt", "rw").ExpectValue();
+
+    std::string_view str = "bytes data";
+    std::span<std::byte> buffer{(std::byte*)str.data(), str.size()};
+
+    co_await file.Write(buffer);
+
+    std::cout << "After write!\n";
+
+    co_return {};
+  });
+}
