@@ -8,12 +8,14 @@
 #include <coros/executors/executor.hpp>
 #include <coros/support/task_count.hpp>
 #include <coros/tasks/task.hpp>
-//#include <coros/tasks/sched/timer.hpp>
-#include <coros/timers/timers_scheduler.hpp>
 
 namespace coros::tasks {
 template <typename Rep, typename Period>
 class TimerAwaiter;
+}
+
+namespace coros::timer {
+class TimerScheduler;
 }
 
 namespace coros::executors::compute {
@@ -21,11 +23,11 @@ namespace coros::executors::compute {
 class ThreadPool : public IExecutor {
   template <typename Rep, typename Period>
   friend class tasks::TimerAwaiter;
-
+  friend class timer::TimerScheduler;
  public:
   explicit ThreadPool(size_t threads);
 
-  void Execute(tasks::TaskBase* task) override;
+  void Execute(tasks::TaskBase* task, Hint hint = Hint::UpToYou) override;
 
   void WaitIdle();
 
@@ -42,7 +44,7 @@ class ThreadPool : public IExecutor {
   std::vector<std::thread> workers_;
   MPMCBlockingQueue<tasks::TaskBase> tasks_;
   support::TaskCount tasks_count_;
-  timer::TimerScheduler timer_;
+  std::unique_ptr<timer::TimerScheduler> timer_;
 };
 
 }  // namespace coros::executors::compute

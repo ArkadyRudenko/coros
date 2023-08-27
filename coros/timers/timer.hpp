@@ -19,6 +19,8 @@ struct ITimer {
   virtual Millis Delay() const = 0;
 
   virtual void Alarm() = 0;
+
+  virtual executors::IExecutor& GetExecutor() const = 0;
 };
 
 struct TimerBase : ITimer,

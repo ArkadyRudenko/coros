@@ -138,11 +138,14 @@ TEST(Main, Timer) {
 
     std::cout << "3s later..." << std::endl;
 
+    co_await 3s;
+
+    std::cout << "3s later..." << std::endl;
+
     co_return{};
   };
 
   tasks::FireAndForget(timer());
-  std::this_thread::sleep_for(7s);
 
   pool.WaitIdle();
 

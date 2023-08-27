@@ -23,7 +23,7 @@ class TimerAwaiter final : public timer::TimerBase, public TaskBase {
 
   void await_suspend(std::coroutine_handle<> caller) {
     caller_ = caller;
-    pool_.timer_.AddTimer(this);
+    pool_.timer_->AddTimer(this);
   }
 
   void await_resume() {}
@@ -38,6 +38,10 @@ class TimerAwaiter final : public timer::TimerBase, public TaskBase {
 
   void Discard() noexcept override {
 //    caller_.destroy(); // TODO
+  }
+
+  [[nodiscard]] executors::IExecutor& GetExecutor() const override {
+    return pool_;
   }
 
  private:

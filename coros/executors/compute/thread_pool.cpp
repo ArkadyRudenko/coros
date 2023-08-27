@@ -1,4 +1,5 @@
 #include <coros/executors/compute/thread_pool.hpp>
+#include <coros/timers/timers_scheduler.hpp>
 
 #include <iostream>
 
@@ -6,14 +7,23 @@ namespace coros::executors::compute {
 
 static thread_local ThreadPool* pool{nullptr};
 
-ThreadPool::ThreadPool(size_t threads) {
+ThreadPool::ThreadPool(size_t threads)
+    : timer_(std::make_unique<timer::TimerScheduler>()) {
   for (size_t i = 0; i < threads; ++i) {
     workers_.emplace_back(&ThreadPool::WorkerRoutine, this);
   }
 }
 
-void ThreadPool::Execute(tasks::TaskBase* task) {
-  tasks_count_.Add(1);
+void ThreadPool::Execute(tasks::TaskBase* task, Hint hint) {
+  if (hint == Hint::AddTimer) {
+    tasks_count_.Add();
+    return;
+  }
+  if (hint == Hint::RemoveTimer) {
+    tasks_count_.Done();
+    return;
+  }
+  tasks_count_.Add();
   if (!tasks_.Put(task)) {
     task->Discard();
     std::cerr << "Execute is not ordered with Stop";
