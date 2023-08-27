@@ -8,18 +8,19 @@ namespace coros::executors::compute {
 static thread_local ThreadPool* pool{nullptr};
 
 ThreadPool::ThreadPool(size_t threads)
-    : timer_(std::make_unique<timer::TimerScheduler>()) {
+    : timer_(std::make_unique<timer::TimerScheduler>()),
+      io_(std::make_unique<io::IOScheduler>(*this)) {
   for (size_t i = 0; i < threads; ++i) {
     workers_.emplace_back(&ThreadPool::WorkerRoutine, this);
   }
 }
 
 void ThreadPool::Execute(tasks::TaskBase* task, Hint hint) {
-  if (hint == Hint::AddTimer) {
+  if (hint == Hint::AddAction) {
     tasks_count_.Add();
     return;
   }
-  if (hint == Hint::RemoveTimer) {
+  if (hint == Hint::RemoveAction) {
     tasks_count_.Done();
     return;
   }

@@ -3,8 +3,8 @@
 #include <chrono>
 
 #include <coros/executors/compute/thread_pool.hpp>
-#include <coros/timers/timers_scheduler.hpp>
 #include <coros/timers/timer.hpp>
+#include <coros/timers/timers_scheduler.hpp>
 
 namespace coros::tasks {
 
@@ -37,7 +37,7 @@ class TimerAwaiter final : public timer::TimerBase, public TaskBase {
   void Run() noexcept override { caller_.resume(); }
 
   void Discard() noexcept override {
-//    caller_.destroy(); // TODO
+    //    caller_.destroy(); // TODO
   }
 
   [[nodiscard]] executors::IExecutor& GetExecutor() const override {
@@ -49,6 +49,12 @@ class TimerAwaiter final : public timer::TimerBase, public TaskBase {
   Pool& pool_;
   std::coroutine_handle<> caller_;
 };
+
+template <typename Rep, typename Period>
+std::chrono::duration<Rep, Period> SleepFor(
+    std::chrono::duration<Rep, Period> duration) noexcept {
+  return duration;
+}
 
 }  // namespace coros::tasks
 

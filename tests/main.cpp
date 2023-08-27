@@ -12,6 +12,8 @@
 #include <coros/tasks/sched/teleport.hpp>
 #include <coros/tasks/sched/timer.hpp>
 #include <coros/tasks/sync/mutex.hpp>
+#include <coros/io/file.hpp>
+#include <coros/io/io_awaiter.hpp>
 
 TEST(Main, Gorroutine) {
   using namespace coros;
@@ -21,7 +23,7 @@ TEST(Main, Gorroutine) {
   auto gorroutine = [&]() -> tasks::Task<> {
     std::cout << "Hi" << std::endl;
     done = true;
-    co_return{};
+    co_return {};
   };
 
   auto task = gorroutine();
@@ -34,7 +36,6 @@ TEST(Main, Gorroutine) {
 }
 
 TEST(Main, Teleport) {
-
   using namespace coros;
 
   executors::compute::ThreadPool pool{4};
@@ -50,7 +51,7 @@ TEST(Main, Teleport) {
     std::cout << "pool is" << executors::compute::ThreadPool::Current()
               << std::endl;
     done = true;
-    co_return{};
+    co_return {};
   };
 
   auto task = gorroutine();
@@ -87,7 +88,7 @@ TEST(Main, CoAwaitInPool) {
     co_await Compute(pool);
     std::cout << "value = " << v << std::endl;
 
-    co_return{};
+    co_return {};
   };
 
   auto task = gorroutine();
@@ -114,7 +115,7 @@ TEST(Main, Via) {
     int v = co_await Compute().Via(pool);
     int v2 = co_await Compute();
     std::cout << "value = " << v + v2 << std::endl;
-    co_return{};
+    co_return {};
   };
 
   //  coros::tasks::Await(gorroutine());
@@ -138,19 +139,18 @@ TEST(Main, Timer) {
   auto timer = [&]() -> tasks::Task<> {
     co_await pool;
     for (size_t i = 0; i < 5; ++i) {
-      tasks::FireAndForget(
-        CreateTask([]() -> Task<> {
-          co_await 1s;
-          std::cout << "I`m wake!" << std::endl;
-          co_return{};
-        }).Via(pool));
+      tasks::FireAndForget(CreateTask([]() -> Task<> {
+                             co_await SleepFor(1s);
+                             std::cout << "I`m wake!" << std::endl;
+                             co_return {};
+                           }).Via(pool));
     }
     std::cout << "Start sleep for 3 seconds..." << std::endl;
     co_await 3s;
     std::cout << "3s later..." << std::endl;
     co_await 3s;
     std::cout << "3s later..." << std::endl;
-    co_return{};
+    co_return {};
   };
 
   tasks::FireAndForget(timer());
@@ -167,7 +167,7 @@ TEST(Main, Mutex) {
 
   size_t counter{0};
 
-  static const size_t tasks_count = 1000;
+  static const size_t tasks_count = 100000;
   static const size_t iter_count = 1000;
 
   auto main = [&]() -> Task<> {
@@ -176,18 +176,17 @@ TEST(Main, Mutex) {
     Mutex mutex;
 
     for (size_t i = 0; i < tasks_count; ++i) {
-      co_await[&]()->Task<> {
-
+      co_await [&]() -> Task<> {
         for (size_t j = 0; j < iter_count; ++j) {
           co_await mutex.ScopedLock();
           ++counter;
         }
-        co_return{};
-      }
-      ().Via(pool);
+        co_return {};
+      }()
+                            .Via(pool);
     }
 
-    co_return{};
+    co_return {};
   };
 
   tasks::FireAndForget(main());
@@ -197,4 +196,32 @@ TEST(Main, Mutex) {
   pool.Stop();
 
   ASSERT_EQ(counter, tasks_count * iter_count);
+}
+
+TEST(Main, IO) {
+  using namespace coros;
+  using namespace std::chrono_literals;
+  using namespace tasks;
+
+  executors::compute::ThreadPool pool{4};
+
+  auto main = [&]() -> Task<> {
+    co_await pool;
+
+    io::File file = io::File::New("hello.txt", "rw").ExpectValue();
+
+    std::string_view hello = "Hello!\n";
+
+    co_await file.Write({(std::byte*)hello.data(), hello.size()});
+
+    std::cout << "After write!\n";
+
+    co_return {};
+  };
+
+  tasks::FireAndForget(main());
+
+  pool.WaitIdle();
+
+  pool.Stop();
 }

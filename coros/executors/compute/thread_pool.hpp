@@ -8,6 +8,7 @@
 #include <coros/executors/executor.hpp>
 #include <coros/support/task_count.hpp>
 #include <coros/tasks/task.hpp>
+#include <coros/io/io_scheduler.hpp>
 
 namespace coros::tasks {
 template <typename Rep, typename Period>
@@ -18,12 +19,19 @@ namespace coros::timer {
 class TimerScheduler;
 }
 
+namespace coros::io {
+class IOAwaiter;
+}
+
 namespace coros::executors::compute {
 
 class ThreadPool : public IExecutor {
+
   template <typename Rep, typename Period>
   friend class tasks::TimerAwaiter;
   friend class timer::TimerScheduler;
+  friend class io::IOAwaiter;
+
  public:
   explicit ThreadPool(size_t threads);
 
@@ -45,6 +53,7 @@ class ThreadPool : public IExecutor {
   MPMCBlockingQueue<tasks::TaskBase> tasks_;
   support::TaskCount tasks_count_;
   std::unique_ptr<timer::TimerScheduler> timer_;
+  std::unique_ptr<io::IOScheduler> io_;
 };
 
 }  // namespace coros::executors::compute

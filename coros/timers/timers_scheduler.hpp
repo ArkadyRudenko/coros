@@ -31,7 +31,7 @@ class TimerScheduler {
     if (stop_request_) {
       return;
     }
-    timer->GetExecutor().Execute(nullptr, executors::Hint::AddTimer);
+    timer->GetExecutor().Execute(nullptr, executors::Hint::AddAction);
     timers_.push(Timer{Clock::now() + timer->Delay(), timer});
   }
 
@@ -53,7 +53,7 @@ class TimerScheduler {
       while (timers != nullptr) {
         auto* next = (TimerBase*)timers->Next();
         timers->Alarm();
-        timers->GetExecutor().Execute(nullptr, executors::Hint::RemoveTimer);
+        timers->GetExecutor().Execute(nullptr, executors::Hint::RemoveAction);
         timers = next;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(1));

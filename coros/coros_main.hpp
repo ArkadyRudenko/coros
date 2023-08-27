@@ -6,6 +6,8 @@
 #include <coros/tasks/core/task.hpp>
 #include <coros/tasks/core/task_awaiter.hpp>
 #include <coros/tasks/sched/fire.hpp>
+#include <coros/io/io_scheduler.hpp>
+#include <coros/io/io_awaiter.hpp>
 
 #define coros_main(main_func)                         \
 int main() {                                          \
@@ -13,7 +15,7 @@ int main() {                                          \
   auto main_coro = [&]()-> coros::tasks::Task<> {     \
     co_await pool;                                    \
     main_func;                                        \
-    co_return;                                        \
+    co_return {};                                     \
   };                                                  \
   coros::tasks::FireAndForget(std::move(main_coro()));\
   pool.WaitIdle();                                    \

@@ -6,8 +6,8 @@ namespace coros::executors {
 
 enum class Hint {
   UpToYou = 0,
-  AddTimer = 1,
-  RemoveTimer = 2,
+  AddAction = 1,
+  RemoveAction = 2,
 };
 
 struct IExecutor {
