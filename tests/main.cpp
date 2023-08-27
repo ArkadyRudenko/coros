@@ -123,32 +123,38 @@ TEST(Main, Via) {
   pool.Stop();
 }
 
+template <std::invocable Fn>
+auto CreateTask(Fn&& task) {
+  return std::move(task());
+}
+
 TEST(Main, Timer) {
   using namespace coros;
+  using namespace coros::tasks;
   using namespace std::chrono_literals;
 
   executors::compute::ThreadPool pool{4};
 
   auto timer = [&]() -> tasks::Task<> {
     co_await pool;
-
+    for (size_t i = 0; i < 5; ++i) {
+      tasks::FireAndForget(
+        CreateTask([]() -> Task<> {
+          co_await 1s;
+          std::cout << "I`m wake!" << std::endl;
+          co_return{};
+        }).Via(pool));
+    }
     std::cout << "Start sleep for 3 seconds..." << std::endl;
-
     co_await 3s;
-
     std::cout << "3s later..." << std::endl;
-
     co_await 3s;
-
     std::cout << "3s later..." << std::endl;
-
     co_return{};
   };
 
   tasks::FireAndForget(timer());
-
   pool.WaitIdle();
-
   pool.Stop();
 }
 
@@ -170,7 +176,7 @@ TEST(Main, Mutex) {
     Mutex mutex;
 
     for (size_t i = 0; i < tasks_count; ++i) {
-      co_await [&]() -> Task<> {
+      co_await[&]()->Task<> {
 
         for (size_t j = 0; j < iter_count; ++j) {
           co_await mutex.ScopedLock();
