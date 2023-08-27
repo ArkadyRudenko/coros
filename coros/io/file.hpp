@@ -15,12 +15,12 @@ using support::Result;
 class File {
  public:
   static Result<File> New(std::string_view name, std::string_view flags) {
-    int flags_ready = O_CREAT | O_TRUNC;
+    int flags_ready = O_CREAT | O_APPEND;
     if (flags.find('r') != std::string_view::npos &&  // TODO: all checks
         flags.find('w') != std::string_view::npos) {
       flags_ready = flags_ready | O_RDWR;
     }
-    int fd = open(name.data(), flags_ready);
+    int fd = open(name.data(), flags_ready, 0666); // TODO
     if (fd == -1) {
       return Result<File>::Err(support::Error{});
     }

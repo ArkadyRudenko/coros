@@ -6,7 +6,7 @@ namespace coros::executors {
 
 enum class Hint {
   UpToYou = 0,
-  AddAction = 1,
+  AddAction = 1, // TODO: this is a poor API
   RemoveAction = 2,
 };
 

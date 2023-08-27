@@ -1,15 +1,15 @@
 #pragma once
 
-#include <coros/executors/executor.hpp>
 #include <coros/executors/compute/thread_pool.hpp>
-#include <coros/tasks/task.hpp>
+#include <coros/executors/executor.hpp>
 #include <coros/io/io_scheduler.hpp>
+#include <coros/tasks/task.hpp>
 
 namespace coros::io {
 
 class IOAwaiter : public tasks::TaskBase {
  public:
-  IOAwaiter(IOAction action) : action_(action) {}
+  explicit IOAwaiter(IOAction action) : action_(action) { action_.task = this; }
 
   bool await_ready() { return false; }
 
@@ -20,12 +20,10 @@ class IOAwaiter : public tasks::TaskBase {
 
   void await_resume() {}
 
-  void Run() noexcept override {
-    caller_.resume();
-  }
+  void Run() noexcept override { caller_.resume(); }
 
   void Discard() noexcept override {
-    caller_.destroy(); // TODO ???
+    caller_.destroy();  // TODO ???
   }
 
  private:

@@ -37,14 +37,20 @@ class IOScheduler {
 
   void AddAction(IOAction action) {
     struct io_uring_sqe* sqe = io_uring_get_sqe(&ring);
-    sqe->user_data = (uint64_t)action.task;
-    if (action.operation == Operation::Read) {
-      io_uring_prep_read(sqe, action.fd, action.buffer.data(),
-                         action.buffer.size(), 0);  // TODO offset!
-      io_uring_submit(&ring);
-    } else if (action.operation == Operation::Write) {
-      io_uring_prep_write(sqe, action.fd, action.buffer.data(),
-                          action.buffer.size(), 0);  // TODO offset!
+    sqe->user_data = (__u64)action.task;
+
+    // TODO offsets!
+    switch (action.operation) {
+      case Operation::Read: {
+        io_uring_prep_read(sqe, action.fd, action.buffer.data(),
+                           action.buffer.size(), 0);
+        break;
+      };
+      case Operation::Write: {
+        io_uring_prep_write(sqe, action.fd, action.buffer.data(),
+                            action.buffer.size(), 0);
+        break;
+      }
     }
     pool_.Execute(nullptr, executors::Hint::AddAction);
     io_uring_submit(&ring);
@@ -52,6 +58,10 @@ class IOScheduler {
 
   void Stop() {
     stop_request_.store(true);
+    struct io_uring_sqe* sqe = io_uring_get_sqe(&ring);
+    io_uring_prep_write(sqe, 1, "_",
+                        1, 0);
+    io_uring_submit(&ring);
     worker_thread_.join();
   }
 
@@ -65,13 +75,19 @@ class IOScheduler {
   void Work() {
     memset(&params, 0, sizeof(params));
     int ret = io_uring_queue_init_params(4096, &ring, &params);
-    assert(ret == 0);
+    assert(ret >= 0);
 
     // HERE
-    struct io_uring_cqe* cqe;
+    struct io_uring_cqe* cqe = nullptr;
     while (!stop_request_) {
 
       ret = io_uring_wait_cqe(&ring, &cqe);
+      if (stop_request_) {
+        break;
+      }
+      if (ret != 0) {
+        std::cout << "Errno = " << errno << std::endl;
+      }
       assert(ret == 0);
 
       assert(cqe->res > 0);

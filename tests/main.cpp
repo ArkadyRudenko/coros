@@ -5,6 +5,8 @@
 
 #include <coros/executors/compute/thread_pool.hpp>
 #include <coros/executors/pool_awaiter.hpp>
+#include <coros/io/file.hpp>
+#include <coros/io/io_awaiter.hpp>
 #include <coros/tasks/core/task.hpp>
 #include <coros/tasks/core/task_awaiter.hpp>
 #include <coros/tasks/sched/await.hpp>
@@ -12,8 +14,6 @@
 #include <coros/tasks/sched/teleport.hpp>
 #include <coros/tasks/sched/timer.hpp>
 #include <coros/tasks/sync/mutex.hpp>
-#include <coros/io/file.hpp>
-#include <coros/io/io_awaiter.hpp>
 
 TEST(Main, Gorroutine) {
   using namespace coros;
@@ -182,8 +182,7 @@ TEST(Main, Mutex) {
           ++counter;
         }
         co_return {};
-      }()
-                            .Via(pool);
+      }().Via(pool);
     }
 
     co_return {};
@@ -211,10 +210,21 @@ TEST(Main, IO) {
     io::File file = io::File::New("hello.txt", "rw").ExpectValue();
 
     std::string_view hello = "Hello!\n";
+    std::span<std::byte> buffer = {(std::byte*)hello.data(), hello.size()};
 
-    co_await file.Write({(std::byte*)hello.data(), hello.size()});
+    co_await file.Write(buffer);
 
     std::cout << "After write!\n";
+
+    std::vector<std::byte> out;
+    out.reserve(hello.size());
+
+    co_await file.Read({out.data(), out.capacity()});
+
+    const char* res = (const char*)out.data();
+    for (size_t i = 0; i < hello.size(); ++i) {
+      std::cout << res[i];
+    }
 
     co_return {};
   };
