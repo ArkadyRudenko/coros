@@ -207,19 +207,18 @@ TEST(Main, IO) {
   auto main = [&]() -> Task<> {
     co_await pool;
 
-    io::File file = io::File::New("hello.txt", "rw").ExpectValue();
+    io::File file = io::File::Open("hello.txt", "rw").ExpectValue();
 
     std::string_view hello = "Hello!\n";
-    std::span<std::byte> buffer = {(std::byte*)hello.data(), hello.size()};
 
-    co_await file.Write(buffer);
+    co_await file.Write(hello);
 
     std::cout << "After write!\n";
 
     std::vector<std::byte> out;
     out.reserve(hello.size());
 
-    co_await file.Read({out.data(), out.capacity()});
+    co_await file.Read(io::ToBuffer(out));
 
     const char* res = (const char*)out.data();
     for (size_t i = 0; i < hello.size(); ++i) {

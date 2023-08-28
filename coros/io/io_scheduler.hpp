@@ -12,23 +12,10 @@
 #include <vector>
 
 #include <coros/executors/executor.hpp>
+#include <coros/io/io_action.hpp>
 #include <coros/tasks/task.hpp>
 
 namespace coros::io {
-
-enum class Operation {
-  Read = 0,
-  Write = 1,
-};
-
-using Buffer = std::span<std::byte>;
-
-struct IOAction {
-  Operation operation;
-  Buffer buffer;
-  int fd;
-  coros::tasks::TaskBase* task;
-};
 
 class IOScheduler {
  public:
@@ -59,8 +46,8 @@ class IOScheduler {
   void Stop() {
     stop_request_.store(true);
     struct io_uring_sqe* sqe = io_uring_get_sqe(&ring);
-    io_uring_prep_write(sqe, 1, "",
-                        0, 0);
+    // this operation need to wake worker_thread_ =(
+    io_uring_prep_write(sqe, 1, "", 0, 0);
     io_uring_submit(&ring);
     worker_thread_.join();
   }
@@ -77,7 +64,6 @@ class IOScheduler {
     int ret = io_uring_queue_init_params(4096, &ring, &params);
     assert(ret >= 0);
 
-    // HERE
     struct io_uring_cqe* cqe = nullptr;
     while (!stop_request_) {
 

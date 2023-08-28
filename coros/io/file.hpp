@@ -14,7 +14,7 @@ using support::Result;
 
 class File {
  public:
-  static Result<File> New(std::string_view name, std::string_view flags) {
+  static Result<File> Open(std::string_view name, std::string_view flags) {
     int flags_ready = O_CREAT | O_APPEND;
     if (IsRead(flags) && IsWrite(flags)) {
       flags_ready = flags_ready | O_RDWR;
