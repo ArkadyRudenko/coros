@@ -12,7 +12,7 @@
 #include <coros/tasks/sched/await.hpp>
 #include <coros/tasks/sched/fire.hpp>
 #include <coros/tasks/sched/teleport.hpp>
-#include <coros/tasks/sched/timer.hpp>
+#include <coros/tasks/sched/timer_awaiter.hpp>
 #include <coros/tasks/sync/mutex.hpp>
 
 TEST(Main, Gorroutine) {

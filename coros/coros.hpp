@@ -3,15 +3,15 @@
 #include <type_traits>
 
 #include <coros/executors/compute/thread_pool.hpp>
-#include <coros/executors/shard/thread_pool.hpp>
 #include <coros/executors/pool_awaiter.hpp>
+#include <coros/executors/shard/thread_pool.hpp>
 #include <coros/io/file.hpp>
 #include <coros/io/io_awaiter.hpp>
 #include <coros/io/io_scheduler.hpp>
 #include <coros/tasks/core/task.hpp>
 #include <coros/tasks/core/task_awaiter.hpp>
 #include <coros/tasks/sched/fire.hpp>
-#include <coros/tasks/sched/timer.hpp>
+#include <coros/tasks/sched/timer_awaiter.hpp>
 #include <coros/tasks/task.hpp>
 #include <coros/timers/timer.hpp>
 

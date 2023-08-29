@@ -3,13 +3,14 @@
 #include <chrono>
 
 #include <coros/executors/compute/thread_pool.hpp>
+#include <coros/tasks/awaiter.hpp>
 #include <coros/timers/timer.hpp>
 #include <coros/timers/timers_scheduler.hpp>
 
 namespace coros::tasks {
 
 template <typename Rep, typename Period>
-class TimerAwaiter final : public timer::TimerBase, public TaskBase {
+class TimerAwaiter final : public timer::TimerBase, public TaskBase, Awaiter<> {
 
   using Pool = executors::compute::ThreadPool;
 
@@ -21,8 +22,8 @@ class TimerAwaiter final : public timer::TimerBase, public TaskBase {
 
   bool await_ready() { return false; }
 
-  void await_suspend(std::coroutine_handle<> caller) {
-    caller_ = caller;
+  void await_suspend(CoroutineHandle caller) {
+    SetCoroutine(caller);
     pool_.timer_->AddTimer(this);
   }
 
@@ -34,20 +35,19 @@ class TimerAwaiter final : public timer::TimerBase, public TaskBase {
 
   void Alarm() override { pool_.Execute(this); }
 
-  void Run() noexcept override { caller_.resume(); }
+  void Run() noexcept override { Resume(); }
 
-  void Discard() noexcept override {
-    //    caller_.destroy(); // TODO
-  }
+  void Discard() noexcept override { Destroy(); }
 
   [[nodiscard]] executors::IExecutor& GetExecutor() const override {
     return pool_;
   }
 
+  ~TimerAwaiter() override { Destroy(); }
+
  private:
   std::chrono::system_clock::duration duration_;
   Pool& pool_;
-  std::coroutine_handle<> caller_;
 };
 
 template <typename Rep, typename Period>

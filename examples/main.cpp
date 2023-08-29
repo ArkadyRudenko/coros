@@ -12,9 +12,8 @@ int main() {
         coros::io::File::Open("hello.txt", "rw").ExpectValue();
 
     std::string_view str = "bytes data";
-    coros::io::Buffer buffer = coros::io::ToBuffer(str);
 
-    co_await file.Write(buffer);
+    co_await file.Write(str);
 
     std::cout << "After write!\n";
 

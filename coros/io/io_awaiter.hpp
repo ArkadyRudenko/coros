@@ -4,33 +4,33 @@
 #include <coros/io/io_action.hpp>
 #include <coros/io/io_base.hpp>
 #include <coros/io/io_scheduler.hpp>
+#include <coros/tasks/awaiter.hpp>
 
 namespace coros::io {
 
-class IOAwaiter : public IOBase {
+class IOAwaiter : public IOBase, tasks::Awaiter<> {
  public:
   explicit IOAwaiter(IOAction action) : action_(action) { action_.base = this; }
 
   bool await_ready() { return false; }
 
   void await_suspend(std::coroutine_handle<> caller) {
-    caller_ = caller;
+    SetCoroutine(caller);
     executors::compute::ThreadPool::Current()->io_->AddAction(action_);
   }
 
   size_t await_resume() { return read_write_bytes_; }
 
-  void Run() noexcept override { caller_.resume(); }
+  void Run() noexcept override { Resume(); }
 
-  void Discard() noexcept override {
-    caller_.destroy();  // TODO ???
-  }
+  void Discard() noexcept override { Destroy(); }
 
   void SetBytes(size_t bytes) noexcept override { read_write_bytes_ = bytes; }
 
+  ~IOAwaiter() override { Destroy(); }
+
  private:
   IOAction action_;
-  std::coroutine_handle<> caller_;
   size_t read_write_bytes_{0};
 };
 

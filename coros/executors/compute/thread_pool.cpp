@@ -36,7 +36,9 @@ void ThreadPool::WorkerRoutine() {
   pool = this;
 
   while (tasks::TaskBase* next = tasks_.Take()) {
-    next->Run();
+    try {
+      next->Run();
+    } catch (...) {}
     tasks_count_.Done();
   }
 }
@@ -57,7 +59,7 @@ ThreadPool* ThreadPool::Current() {
   return pool;
 }
 
-ThreadPool::~ThreadPool()  {
+ThreadPool::~ThreadPool() {
   Stop();
 }
 

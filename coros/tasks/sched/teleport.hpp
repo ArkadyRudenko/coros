@@ -3,30 +3,30 @@
 #include <coroutine>
 
 #include <coros/executors/executor.hpp>
+#include <coros/tasks/awaiter.hpp>
 #include <coros/tasks/task.hpp>
 
 namespace coros::tasks {
 namespace detail {
 
-class TaskTeleportAwaiter : public tasks::TaskBase {
+class TaskTeleportAwaiter : public tasks::TaskBase, Awaiter<> {
  public:
   TaskTeleportAwaiter(executors::IExecutor& executor) : executor_(executor) {}
 
   bool await_ready() { return false; }
 
-  void await_suspend(std::coroutine_handle<> h) {
-    handle_ = h;
+  void await_suspend(std::coroutine_handle<> caller) {
+    SetCoroutine(caller);
     executor_.Execute(this);
   }
 
   void await_resume() {}
 
-  void Run() noexcept override { handle_.resume(); }
+  void Run() noexcept override { Resume(); }
 
-  void Discard() noexcept override { handle_.destroy(); }
+  void Discard() noexcept override { Destroy(); }
 
  private:
-  std::coroutine_handle<> handle_;
   executors::IExecutor& executor_;
 };
 
