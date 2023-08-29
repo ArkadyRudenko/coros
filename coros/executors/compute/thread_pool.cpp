@@ -57,7 +57,7 @@ ThreadPool* ThreadPool::Current() {
   return pool;
 }
 
-ThreadPool::~ThreadPool() {
+ThreadPool::~ThreadPool()  {
   Stop();
 }
 

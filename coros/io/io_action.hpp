@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include <coros/tasks/task.hpp>
+#include <coros/io/io_base.hpp>
 
 namespace coros::io {
 
@@ -21,16 +22,17 @@ template <typename T>
            requires(T t) {
              t.data();
              t.size();
+             t.capacity();
            })
 Buffer ToBuffer(T& t) {
-  return {(std::byte*)t.data(), t.size()};
+  return {(std::byte*)t.data(), t.capacity()}; // TODO: make class Bytes
 }
 
 struct IOAction {
   Operation operation;
   Buffer buffer;
   int fd;
-  coros::tasks::TaskBase* task;
+  io::IOBase* base;
 };
 
 }  // namespace coros::io

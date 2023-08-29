@@ -12,6 +12,8 @@ enum class Hint {
 
 struct IExecutor {
   virtual void Execute(tasks::TaskBase* task, Hint hint = Hint::UpToYou) = 0;
+
+  virtual ~IExecutor() = default;
 };
 
 }  // namespace coros::executors

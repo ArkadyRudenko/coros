@@ -11,7 +11,7 @@ file(GLOB_RECURSE LIB_HEADERS ${LIB_PATH}/*.hpp)
 add_library(${LIB_TARGET} STATIC ${LIB_CXX_SOURCES} ${LIB_HEADERS})
 target_include_directories(${LIB_TARGET} PUBLIC ${LIB_INCLUDE_PATH})
 
-target_link_libraries(${LIB_TARGET} "/lib/liburing.a")
+target_link_libraries(${LIB_TARGET} PUBLIC "/lib/liburing.a")
 
 set_target_properties(
         ${LIB_TARGET}

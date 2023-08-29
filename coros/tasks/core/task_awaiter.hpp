@@ -5,6 +5,7 @@
 #include <coros/tasks/task.hpp>
 
 #include <coros/support/unit.hpp>
+#include <coros/support/result.hpp>
 
 namespace coros::tasks {
 
@@ -23,6 +24,7 @@ class TaskResultAwaiter : public tasks::TaskBase {
     task_.GetExecutor().Execute(this);
   }
 
+  // TODO: Result<T>
   T await_resume() {
     if constexpr (std::is_same_v<T, support::Unit>) {
       return support::Unit{};

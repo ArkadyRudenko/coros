@@ -3,6 +3,7 @@
 #include <type_traits>
 
 #include <coros/executors/compute/thread_pool.hpp>
+#include <coros/executors/shard/thread_pool.hpp>
 #include <coros/executors/pool_awaiter.hpp>
 #include <coros/io/file.hpp>
 #include <coros/io/io_awaiter.hpp>

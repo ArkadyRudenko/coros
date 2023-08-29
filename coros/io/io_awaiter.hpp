@@ -1,15 +1,15 @@
 #pragma once
 
 #include <coros/executors/compute/thread_pool.hpp>
-#include <coros/executors/executor.hpp>
+#include <coros/io/io_action.hpp>
+#include <coros/io/io_base.hpp>
 #include <coros/io/io_scheduler.hpp>
-#include <coros/tasks/task.hpp>
 
 namespace coros::io {
 
-class IOAwaiter : public tasks::TaskBase {
+class IOAwaiter : public IOBase {
  public:
-  explicit IOAwaiter(IOAction action) : action_(action) { action_.task = this; }
+  explicit IOAwaiter(IOAction action) : action_(action) { action_.base = this; }
 
   bool await_ready() { return false; }
 
@@ -18,7 +18,7 @@ class IOAwaiter : public tasks::TaskBase {
     executors::compute::ThreadPool::Current()->io_->AddAction(action_);
   }
 
-  void await_resume() {}
+  size_t await_resume() { return read_write_bytes_; }
 
   void Run() noexcept override { caller_.resume(); }
 
@@ -26,9 +26,12 @@ class IOAwaiter : public tasks::TaskBase {
     caller_.destroy();  // TODO ???
   }
 
+  void SetBytes(size_t bytes) noexcept override { read_write_bytes_ = bytes; }
+
  private:
   IOAction action_;
   std::coroutine_handle<> caller_;
+  size_t read_write_bytes_{0};
 };
 
 }  // namespace coros::io

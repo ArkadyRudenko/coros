@@ -6,7 +6,7 @@ namespace coros::executors {
 
 class InlineExecutor final : public IExecutor {
  public:
-  void Execute(tasks::TaskBase* task, Hint hint) override { task->Run(); }
+  void Execute(tasks::TaskBase* task, Hint /*hint*/) override { task->Run(); }
 };
 
 IExecutor& Inline() {

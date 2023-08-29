@@ -30,20 +30,21 @@ class File {
       return Result<File>::Err(support::Error{});
     }
     return Result<File>::Ok(
-        File(std::move(std::string(name)), flags_ready, fd));
+        File(std::string(name), flags_ready, fd));
   }
 
+  // TODO return bytes read
   IOAction Read(Buffer buffer) {
-    return IOAction{Operation::Read, buffer, fd_};
+    return IOAction{Operation::Read, buffer, fd_, nullptr};
   }
 
   IOAction Write(Buffer buffer) {
-    return IOAction{Operation::Write, buffer, fd_};
+    return IOAction{Operation::Write, buffer, fd_, nullptr};
   }
 
   IOAction Write(std::string_view str) {
     return IOAction{
-        Operation::Write, {(std::byte*)str.data(), str.size()}, fd_};
+        Operation::Write, {(std::byte*)str.data(), str.size() }, fd_, nullptr};
   }
 
   // TODO: better API

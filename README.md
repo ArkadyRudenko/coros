@@ -8,7 +8,7 @@ Coros is a light-weight concurrency framework with coroutines from C++20:
 [Docs](docs/docs.md)
 
 - Features
-    - async io
+    - async io with [io_uring](https://github.com/axboe/liburing)
     - timers
 
 

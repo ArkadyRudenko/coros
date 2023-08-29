@@ -211,17 +211,19 @@ TEST(Main, IO) {
 
     std::string_view hello = "Hello!\n";
 
-    co_await file.Write(hello);
+    size_t bytes = co_await file.Write(hello);
 
-    std::cout << "After write!\n";
+    std::cout << "write = " << bytes << std::endl;
 
     std::vector<std::byte> out;
-    out.reserve(hello.size());
+    out.reserve(20);
 
-    co_await file.Read(io::ToBuffer(out));
+    bytes = co_await file.Read(io::ToBuffer(out));
+
+    std::cout << "read = " << bytes << std::endl;
 
     const char* res = (const char*)out.data();
-    for (size_t i = 0; i < hello.size(); ++i) {
+    for (size_t i = 0; i < bytes; ++i) {
       std::cout << res[i];
     }
 
