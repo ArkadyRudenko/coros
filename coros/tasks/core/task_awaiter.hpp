@@ -6,9 +6,9 @@
 
 #include <coros/support/unit.hpp>
 
-namespace coros::tasks {
+#include <chrono>
 
-namespace detail {
+namespace coros::tasks::detail {
 
 template <typename T>
 class TaskResultAwaiter : public tasks::TaskBase {
@@ -18,8 +18,9 @@ class TaskResultAwaiter : public tasks::TaskBase {
   bool await_ready() { return false; }
 
   void await_suspend(std::coroutine_handle<> caller) {
-    callee_ = task_.ReleaseCoroutine();
+    callee_ = task_.GetCoroutine();
     callee_.promise().SetCaller(caller);
+
     task_.GetExecutor().Execute(this);
   }
 
@@ -41,9 +42,9 @@ class TaskResultAwaiter : public tasks::TaskBase {
   tasks::Task<T> task_;
 };
 
-}  // namespace detail
+} // namespace coros::tasks::detail
 
-}  // namespace coros::tasks
+
 
 template <typename T>
 auto operator co_await(coros::tasks::Task<T>&& task) {

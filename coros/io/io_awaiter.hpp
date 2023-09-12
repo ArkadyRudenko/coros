@@ -10,7 +10,9 @@ namespace coros::io {
 
 class IOAwaiter : public IOBase, tasks::Awaiter<> {
  public:
-  explicit IOAwaiter(IOAction action) : action_(action) { action_.base = this; }
+  explicit IOAwaiter(IOAction action) : action_(action), read_write_bytes_(0) {
+    action_.base = this;
+  }
 
   bool await_ready() { return false; }
 
@@ -19,19 +21,21 @@ class IOAwaiter : public IOBase, tasks::Awaiter<> {
     executors::compute::ThreadPool::Current()->io_->AddAction(action_);
   }
 
-  size_t await_resume() { return read_write_bytes_; }
+  size_t await_resume() { return read_write_bytes_.load(); }
 
   void Run() noexcept override { Resume(); }
 
   void Discard() noexcept override { Destroy(); }
 
-  void SetBytes(size_t bytes) noexcept override { read_write_bytes_ = bytes; }
+  void SetBytes(size_t bytes) noexcept override {
+    read_write_bytes_.store(bytes);
+  }
 
   ~IOAwaiter() override { Destroy(); }
 
  private:
   IOAction action_;
-  size_t read_write_bytes_{0};
+  std::atomic<size_t> read_write_bytes_;
 };
 
 }  // namespace coros::io

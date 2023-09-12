@@ -33,7 +33,6 @@ class File {
         File(std::string(name), flags_ready, fd));
   }
 
-  // TODO return bytes read
   IOAction Read(Buffer buffer) {
     return IOAction{Operation::Read, buffer, fd_, nullptr};
   }

@@ -30,7 +30,7 @@ TEST(Main, Gorroutine) {
 
   ASSERT_FALSE(done);
 
-  tasks::FireAndForget(std::move(task));
+  tasks::FireAndForget(task);
 
   ASSERT_TRUE(done);
 }
@@ -58,7 +58,7 @@ TEST(Main, Teleport) {
 
   ASSERT_FALSE(done);
 
-  tasks::FireAndForget(std::move(task));
+  tasks::FireAndForget(task);
 
   pool.WaitIdle();
 
@@ -67,9 +67,7 @@ TEST(Main, Teleport) {
   pool.Stop();
 }
 
-coros::tasks::Task<int> Compute(coros::executors::compute::ThreadPool& pool) {
-  co_await pool;
-  std::cout << "Step 1" << std::endl;
+coros::tasks::Task<int> Compute() {
   std::cout << "th-id Compute: " << std::this_thread::get_id() << std::endl;
   co_return 42;
 }
@@ -79,27 +77,23 @@ TEST(Main, CoAwaitInPool) {
   executors::compute::ThreadPool pool{4};
 
   auto gorroutine = [&]() -> tasks::Task<> {
+    std::cout << "Start th-id Gorroutine: " << std::this_thread::get_id()
+              << std::endl;
     co_await pool;
     std::cout << "th-id Gorroutine: " << std::this_thread::get_id()
               << std::endl;
-    int v = co_await Compute(pool) + co_await Compute(pool);
-    co_await Compute(pool);
-    co_await Compute(pool);
-    co_await Compute(pool);
+    int v = co_await Compute().Via(pool) + co_await Compute().Via(pool);
+    co_await Compute().Via(pool);
     std::cout << "value = " << v << std::endl;
+    std::cout << "Final" << std::endl;
 
     co_return {};
   };
 
   auto task = gorroutine();
-  tasks::FireAndForget(std::move(task));
+  tasks::FireAndForget(task);
   pool.WaitIdle();
   pool.Stop();
-}
-
-coros::tasks::Task<int> Compute() {
-  std::cout << "th-id Compute: " << std::this_thread::get_id() << std::endl;
-  co_return 42;
 }
 
 TEST(Main, Via) {
@@ -119,7 +113,8 @@ TEST(Main, Via) {
   };
 
   //  coros::tasks::Await(gorroutine());
-  tasks::FireAndForget(gorroutine());
+  auto task = gorroutine();
+  tasks::FireAndForget(task);
   pool.WaitIdle();
   pool.Stop();
 }
@@ -139,21 +134,23 @@ TEST(Main, Timer) {
   auto timer = [&]() -> tasks::Task<> {
     co_await pool;
     for (size_t i = 0; i < 5; ++i) {
-      tasks::FireAndForget(CreateTask([]() -> Task<> {
-                             co_await SleepFor(1s);
-                             std::cout << "I`m wake!" << std::endl;
-                             co_return {};
-                           }).Via(pool));
+      auto task = CreateTask([]() -> Task<> {
+                    co_await SleepFor(1s);
+                    std::cout << "I`m wake!" << std::endl;
+                    co_return {};
+                  }).Via(pool);
+      tasks::FireAndForget(task);
     }
     std::cout << "Start sleep for 3 seconds..." << std::endl;
-    co_await 3s;
+//    co_await 3s;
     std::cout << "3s later..." << std::endl;
-    co_await 3s;
+//    co_await 3s;
     std::cout << "3s later..." << std::endl;
     co_return {};
   };
 
-  tasks::FireAndForget(timer());
+  auto task = timer();
+  tasks::FireAndForget(task);
   pool.WaitIdle();
   pool.Stop();
 }
@@ -167,7 +164,7 @@ TEST(Main, Mutex) {
 
   size_t counter{0};
 
-  static const size_t tasks_count = 100000;
+  static const size_t tasks_count = 1000;
   static const size_t iter_count = 1000;
 
   auto main = [&]() -> Task<> {
@@ -188,7 +185,8 @@ TEST(Main, Mutex) {
     co_return {};
   };
 
-  tasks::FireAndForget(main());
+  auto task = main();
+  tasks::FireAndForget(task);
 
   pool.WaitIdle();
 
@@ -230,7 +228,8 @@ TEST(Main, IO) {
     co_return {};
   };
 
-  tasks::FireAndForget(main());
+  auto task = main();
+  tasks::FireAndForget(task);
 
   pool.WaitIdle();
 

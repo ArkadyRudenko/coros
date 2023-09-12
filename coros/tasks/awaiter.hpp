@@ -2,6 +2,7 @@
 
 #include <coroutine>
 #include <utility>
+#include <iostream>
 
 #include <coros/support/unit.hpp>
 
@@ -14,18 +15,11 @@ struct Awaiter {
   void SetCoroutine(CoroutineHandle caller) { caller_ = caller; }
 
   void Resume() {
-    if (caller_) {
-      ReleaseCoroutine().resume();
-    } else {
-      std::cerr << "Coroutine is not set\n";
-      std::abort();
-    }
+    ReleaseCoroutine().resume();
   }
 
   void Destroy() {
-    if (caller_) {
-      ReleaseCoroutine().destroy();
-    }
+//    ReleaseCoroutine().destroy();
   }
 
  private:

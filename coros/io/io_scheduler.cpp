@@ -3,6 +3,8 @@
 
 namespace coros::io {
 
+// TODO: Extract io_uring API in other class
+
 IOScheduler::IOScheduler(executors::IExecutor& pool)
     : pool_(pool), worker_thread_([this]() { Work(); }) {}
 

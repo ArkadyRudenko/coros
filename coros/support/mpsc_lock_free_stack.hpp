@@ -69,7 +69,8 @@ class MPSCStack {
   }
 
   [[nodiscard]] bool IsEmpty() const {
-    return top_.load() == nullptr; // TODO
+    auto cur = top_.load();
+    return cur == nullptr || cur == &nothing_;
   }
 
  private:

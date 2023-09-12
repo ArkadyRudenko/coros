@@ -16,6 +16,9 @@
 
 namespace coros::io {
 
+// See
+// https://github.com/ytsaurus/ytsaurus/blob/main/yt/yt/server/lib/io/io_engine_uring.cpp
+
 class IOScheduler {
  public:
   IOScheduler(executors::IExecutor& pool);

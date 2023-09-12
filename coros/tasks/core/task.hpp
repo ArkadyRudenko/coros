@@ -5,6 +5,7 @@
 #include <coroutine>
 #include <exception>
 #include <optional>
+#include <type_traits>
 #include <utility>
 
 #include <coros/executors/executor.hpp>
@@ -21,6 +22,20 @@ struct Task {
 
     using Res = support::Result<T>;
 
+    struct FinalAwaitable {
+      bool await_ready() const noexcept { return false; }
+
+      void await_resume() noexcept {}
+
+      template <typename Promise>
+      void await_suspend(std::coroutine_handle<Promise> h) noexcept {
+        auto continuation = h.promise().caller_;
+        if (continuation) {
+          continuation.resume();
+        }
+      }
+    };
+
     // NOLINTNEXTLINE
     auto get_return_object() {
       return Task{std::coroutine_handle<Promise>::from_promise(*this)};
@@ -30,7 +45,7 @@ struct Task {
     std::suspend_always initial_suspend() noexcept { return {}; }
 
     // NOLINTNEXTLINE
-    std::suspend_never final_suspend() noexcept { return {}; }
+    FinalAwaitable final_suspend() noexcept { return FinalAwaitable{}; }
 
     // NOLINTNEXTLINE
     void set_exception(std::exception_ptr exception_ptr) {
@@ -42,12 +57,7 @@ struct Task {
       result_ = Res::Err(std::move(std::current_exception()));
     }
 
-    void return_value(T res) {
-      result_ = Res::Ok(std::move(res));
-      if (caller_) {
-        std::exchange(caller_, CoroutineHandle()).resume();
-      }
-    }
+    void return_value(T res) { result_ = Res::Ok(std::move(res)); }
 
     void SetCaller(std::coroutine_handle<> caller) { caller_ = caller; }
 
@@ -66,22 +76,24 @@ struct Task {
     }
   }
 
-  Task(Task&&) = default;
+  Task(Task&& other)  noexcept : callee_(other.callee_) { other.callee_ = nullptr; }
 
   // Non-copyable
   Task(const Task&) = delete;
   Task& operator=(const Task&) = delete;
 
   // TODO: error:
-  //  ~Task() {
-  //    if (callee_ != nullptr) {
-  //      callee_.destroy();
-  //    }
-  //  }
+  ~Task() {
+    if (callee_ && callee_.done()) {
+      callee_.destroy();
+    }
+  }
 
   CoroutineHandle ReleaseCoroutine() {
     return std::exchange(callee_, CoroutineHandle());
   }
+
+  CoroutineHandle GetCoroutine() { return callee_; }
 
   Task<T> Via(executors::IExecutor& executor) && {
     return std::move(Task<T>{ReleaseCoroutine(), executor});

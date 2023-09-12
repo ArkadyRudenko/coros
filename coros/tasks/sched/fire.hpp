@@ -4,8 +4,8 @@
 
 namespace coros::tasks {
 
-inline void FireAndForget(Task<>&& task) {
-  task.ReleaseCoroutine().resume();
+inline void FireAndForget(Task<>& task) {
+  task.GetCoroutine().resume();
 }
 
 }  // namespace coros::tasks
