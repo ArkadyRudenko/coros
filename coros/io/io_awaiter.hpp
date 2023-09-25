@@ -21,21 +21,19 @@ class IOAwaiter : public IOBase, tasks::Awaiter<> {
     executors::compute::ThreadPool::Current()->io_->AddAction(action_);
   }
 
-  size_t await_resume() { return read_write_bytes_.load(); }
+  size_t await_resume() { return read_write_bytes_; }
 
   void Run() noexcept override { Resume(); }
 
   void Discard() noexcept override { Destroy(); }
 
   void SetBytes(size_t bytes) noexcept override {
-    read_write_bytes_.store(bytes);
+    read_write_bytes_ = bytes;
   }
-
-  ~IOAwaiter() override { Destroy(); }
 
  private:
   IOAction action_;
-  std::atomic<size_t> read_write_bytes_;
+  size_t read_write_bytes_;
 };
 
 }  // namespace coros::io

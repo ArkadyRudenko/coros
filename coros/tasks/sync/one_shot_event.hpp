@@ -19,12 +19,6 @@ class OneShotEvent {
     OneShotEvent& one_shot_event_;
     CoroutineHandle coro_handle_;
 
-    ~WaitGroupAwaiter() {
-      if (coro_handle_ && coro_handle_.done()) {
-        coro_handle_.destroy();
-      }
-    }
-
     explicit WaitGroupAwaiter(OneShotEvent& ev) : one_shot_event_(ev) {}
 
     // Awaiter protocol

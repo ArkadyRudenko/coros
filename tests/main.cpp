@@ -9,6 +9,7 @@
 #include <coros/io/io_awaiter.hpp>
 #include <coros/tasks/core/task.hpp>
 #include <coros/tasks/core/task_awaiter.hpp>
+#include <coros/tasks/core/background_awaiter.hpp>
 #include <coros/tasks/sched/await.hpp>
 #include <coros/tasks/sched/fire.hpp>
 #include <coros/tasks/sched/teleport.hpp>
@@ -133,18 +134,17 @@ TEST(Main, Timer) {
 
   auto timer = [&]() -> tasks::Task<> {
     co_await pool;
-    for (size_t i = 0; i < 5; ++i) {
-      auto task = CreateTask([]() -> Task<> {
-                    co_await SleepFor(1s);
-                    std::cout << "I`m wake!" << std::endl;
-                    co_return {};
-                  }).Via(pool);
-      tasks::FireAndForget(task);
-    }
+//    for (size_t i = 0; i < 5; ++i) {
+//      co_await BackgroundAwaiter<>([]() -> Task<> {
+//                    co_await SleepFor(1s);
+//                    std::cout << "I`m wake!" << std::endl;
+//                    co_return {};
+//                  }().Via(pool));
+//    }
     std::cout << "Start sleep for 3 seconds..." << std::endl;
-//    co_await 3s;
+    co_await 3s;
     std::cout << "3s later..." << std::endl;
-//    co_await 3s;
+    co_await 3s;
     std::cout << "3s later..." << std::endl;
     co_return {};
   };
